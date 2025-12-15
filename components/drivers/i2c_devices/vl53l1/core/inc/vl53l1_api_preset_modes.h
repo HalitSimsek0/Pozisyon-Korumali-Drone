@@ -1,0 +1,123 @@
+#ifndef _VL53L1_API_PRESET_MODES_H_
+#define _VL53L1_API_PRESET_MODES_H_
+#include "vl53l1_ll_def.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifndef VL53L1_NOCALIB
+VL53L1_Error VL53L1_init_refspadchar_config_struct(
+	VL53L1_refspadchar_config_t     *pdata);
+#endif
+VL53L1_Error VL53L1_init_ssc_config_struct(
+	VL53L1_ssc_config_t     *pdata);
+VL53L1_Error VL53L1_init_xtalk_config_struct(
+		VL53L1_customer_nvm_managed_t *pnvm,
+		VL53L1_xtalk_config_t   *pdata);
+#ifndef VL53L1_NOCALIB
+VL53L1_Error VL53L1_init_offset_cal_config_struct(
+	VL53L1_offsetcal_config_t   *pdata);
+#endif
+VL53L1_Error VL53L1_init_tuning_parm_storage_struct(
+	VL53L1_tuning_parm_storage_t   *pdata);
+VL53L1_Error VL53L1_preset_mode_standard_ranging(
+	VL53L1_static_config_t     *pstatic,
+	VL53L1_general_config_t    *pgeneral,
+	VL53L1_timing_config_t     *ptiming,
+	VL53L1_dynamic_config_t    *pdynamic,
+	VL53L1_system_control_t    *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+VL53L1_Error VL53L1_preset_mode_standard_ranging_short_range(
+	VL53L1_static_config_t     *pstatic,
+	VL53L1_general_config_t    *pgeneral,
+	VL53L1_timing_config_t     *ptiming,
+	VL53L1_dynamic_config_t    *pdynamic,
+	VL53L1_system_control_t    *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+VL53L1_Error VL53L1_preset_mode_standard_ranging_long_range(
+	VL53L1_static_config_t     *pstatic,
+	VL53L1_general_config_t    *pgeneral,
+	VL53L1_timing_config_t     *ptiming,
+	VL53L1_dynamic_config_t    *pdynamic,
+	VL53L1_system_control_t    *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+#ifndef VL53L1_NOCALIB
+VL53L1_Error VL53L1_preset_mode_standard_ranging_mm1_cal(
+	VL53L1_static_config_t     *pstatic,
+	VL53L1_general_config_t    *pgeneral,
+	VL53L1_timing_config_t     *ptiming,
+	VL53L1_dynamic_config_t    *pdynamic,
+	VL53L1_system_control_t    *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+#endif
+#ifndef VL53L1_NOCALIB
+VL53L1_Error VL53L1_preset_mode_standard_ranging_mm2_cal(
+	VL53L1_static_config_t     *pstatic,
+	VL53L1_general_config_t    *pgeneral,
+	VL53L1_timing_config_t     *ptiming,
+	VL53L1_dynamic_config_t    *pdynamic,
+	VL53L1_system_control_t    *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+#endif
+VL53L1_Error VL53L1_preset_mode_timed_ranging(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+VL53L1_Error VL53L1_preset_mode_timed_ranging_short_range(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+VL53L1_Error VL53L1_preset_mode_timed_ranging_long_range(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+VL53L1_Error VL53L1_preset_mode_low_power_auto_ranging(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms,
+	VL53L1_low_power_auto_data_t *plpadata);
+VL53L1_Error VL53L1_preset_mode_low_power_auto_short_ranging(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms,
+	VL53L1_low_power_auto_data_t *plpadata);
+VL53L1_Error VL53L1_preset_mode_low_power_auto_long_ranging(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms,
+	VL53L1_low_power_auto_data_t *plpadata);
+VL53L1_Error VL53L1_preset_mode_olt(
+	VL53L1_static_config_t     *pstatic,
+	VL53L1_general_config_t    *pgeneral,
+	VL53L1_timing_config_t     *ptiming,
+	VL53L1_dynamic_config_t    *pdynamic,
+	VL53L1_system_control_t    *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+VL53L1_Error VL53L1_preset_mode_singleshot_ranging(
+	VL53L1_static_config_t    *pstatic,
+	VL53L1_general_config_t   *pgeneral,
+	VL53L1_timing_config_t    *ptiming,
+	VL53L1_dynamic_config_t   *pdynamic,
+	VL53L1_system_control_t   *psystem,
+	VL53L1_tuning_parm_storage_t *ptuning_parms);
+#ifdef __cplusplus
+}
+#endif
+#endif 

@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ESP-Drone Kontrol</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+            text-align: center;
+        }
+        .status-bar {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .control-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        @media (min-width: 768px) {
+            .control-section {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .joystick-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            text-align: center;
+            touch-action: none;
+            -ms-touch-action: none;
+        }
+        .joystick-container h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .joystick-area {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: #e0e0e0;
+            border-radius: 50%;
+            border: 3px solid #999;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .joystick-stick {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #4CAF50;
+            border-radius: 50%;
+            border: 3px solid #2e7d32;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            touch-action: none;
+            transition: none;
+        }
+        .joystick-stick.active {
+            background: #45a049;
+        }
+        .joystick-label {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .btn-arm {
+            background-color: #2196F3;
+            color: white;
+            font-size: 18px;
+        }
+        .btn-arm.armed {
+            background-color: #4CAF50;
+        }
+        .btn-takeoff {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-land {
+            background-color: #ff9800;
+            color: white;
+        }
+        .btn-emergency {
+            background-color: #f44336;
+            color: white;
+            grid-column: 1 / -1;
+        }
+        .btn:active {
+            opacity: 0.8;
+        }
+        .telemetry-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .telemetry-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .telemetry-card h3 {
+            margin-top: 0;
+            color: #555;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .telemetry-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .status-armed {
+            background-color: #dc3545;
+            color: white;
+        }
+        .status-disarmed {
+            background-color: #28a745;
+            color: white;
+        }
+        .battery-low {
+            color: #dc3545;
+        }
+        .battery-warning {
+            color: #ffc107;
+        }
+        .battery-ok {
+            color: #28a745;
+        }
+        .pid-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .pid-section h3 {
+            margin-top: 0;
+        }
+        .pid-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .pid-input {
+            display: flex;
+            flex-direction: column;
+        }
+        .pid-input label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .pid-input input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn-save-pid {
+            background-color: #2196F3;
+            color: white;
+            margin-top: 10px;
+        }
+        .btn-load-pid {
+            background-color: #9C27B0;
+            color: white;
+            margin-top: 5px;
+        }
+        .status-message {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 1000;
+            transition: opacity 0.3s;
+            max-width: 300px;
+        }
+        .status-message.success {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-message.error {
+            background-color: #dc3545;
+            color: white;
+        }
+        .status-message.warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .telemetry-disconnected {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ESP-Drone Kontrol & Telemetri</h1>
+        
+        <div class="status-bar">
+            <span class="status-indicator status-disarmed" id="connStatus">BAĞLI DEĞİL</span>
+            <span class="status-indicator status-disarmed" id="calibStatus">KALİBRASYON: --</span>
+            <span class="status-indicator status-disarmed" id="posholdStatus">POSHOLD: --</span>
+        </div>
+        
+        <!-- Control Section -->
+        <div class="control-section">
+            <!-- Left Joystick (Roll/Pitch) -->
+            <div class="joystick-container">
+                <h3>Yatış / Yunuslama</h3>
+                <div class="joystick-area" id="joystickLeft">
+                    <div class="joystick-stick" id="stickLeft"></div>
+                </div>
+                <div class="joystick-label">Yatış: <span id="rollValue">0</span> | Yunuslama: <span id="pitchValue">0</span></div>
+            </div>
+            
+            <!-- Right Joystick (Yaw/Throttle) -->
+            <div class="joystick-container">
+                <h3>Dönüş / İtki</h3>
+                <div class="joystick-area" id="joystickRight">
+                    <div class="joystick-stick" id="stickRight"></div>
+                </div>
+                <div class="joystick-label">Dönüş: <span id="yawValue">0</span> | İtki: <span id="throttleValue">0</span></div>
+            </div>
+        </div>
+        
+        <!-- Control Buttons -->
+        <div class="control-buttons">
+            <button class="btn btn-arm" id="armButton" onclick="toggleArm(this)">BAŞLAT</button>
+            <button class="btn btn-land" onclick="land(this)">İniş</button>
+            <button class="btn btn-emergency" onclick="emergency(this)">ACİL DURDUR</button>
+        </div>
+        
+        <!-- Calibration Section -->
+        <div class="calibration-section" style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+            <h3>Kalibrasyon</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button class="btn btn-calibration" id="escCalibButton" onclick="calibrateESC(this)" style="background-color: #9C27B0; color: white;">
+                    ESC Kalibrasyonu
+                </button>
+                <span style="font-size: 12px; color: #666;">
+                    ⚠️ ESC kalibrasyonu için pervaneleri çıkarın ve drone'u disarmed durumda tutun!
+                </span>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                <strong>Otomatik Kalibrasyon:</strong> IMU (MPU9250) sensörleri sistem başlangıcında otomatik kalibre edilir.
+            </div>
+        </div>
+        
+        <!-- PID Controls -->
+        <div class="pid-section">
+            <h3>PID Parametreleri</h3>
+            <div class="pid-controls">
+                <div class="pid-input">
+                    <label>Yatış Kp</label>
+                    <input type="number" id="rollKp" step="0.1" value="4.5">
+                </div>
+                <div class="pid-input">
+                    <label>Yatış Ki</label>
+                    <input type="number" id="rollKi" step="0.1" value="2.8">
+                </div>
+                <div class="pid-input">
+                    <label>Yatış Kd</label>
+                    <input type="number" id="rollKd" step="0.1" value="0">
+                </div>
+                <div class="pid-input">
+                    <label>Yunuslama Kp</label>
+                    <input type="number" id="pitchKp" step="0.1" value="4.5">
+                </div>
+                <div class="pid-input">
+                    <label>Yunuslama Ki</label>
+                    <input type="number" id="pitchKi" step="0.1" value="2.8">
+                </div>
+                <div class="pid-input">
+                    <label>Yunuslama Kd</label>
+                    <input type="number" id="pitchKd" step="0.1" value="0">
+                </div>
+                <div class="pid-input">
+                    <label>Dönüş Kp</label>
+                    <input type="number" id="yawKp" step="0.1" value="6.0">
+                </div>
+                <div class="pid-input">
+                    <label>Dönüş Ki</label>
+                    <input type="number" id="yawKi" step="0.1" value="1.0">
+                </div>
+                <div class="pid-input">
+                    <label>Dönüş Kd</label>
+                    <input type="number" id="yawKd" step="0.1" value="0.35">
+                </div>
+            </div>
+            <button class="btn btn-save-pid" onclick="loadPIDs()">Mevcut PID'leri Yükle</button>
+            <button class="btn btn-save-pid" onclick="savePIDs()">PID'leri Kaydet</button>
+            <button class="btn btn-load-pid" onclick="applyPIDs()">PID'leri Uygula</button>
+        </div>
+        
+        <!-- Telemetry Section -->
+        <div class="telemetry-section">
+            <div class="telemetry-card">
+                <h3>Batarya Voltajı</h3>
+                <div class="telemetry-value" id="batteryVoltage">-- V</div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Silah Durumu</h3>
+                <div class="telemetry-value">
+                    <span class="status-indicator" id="armedStatus">SİLAHSIZ</span>
+                </div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Durum - Yatış</h3>
+                <div class="telemetry-value" id="attitudeRoll">--°</div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Durum - Yunuslama</h3>
+                <div class="telemetry-value" id="attitudePitch">--°</div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Durum - Dönüş</h3>
+                <div class="telemetry-value" id="attitudeYaw">--°</div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Konum - X</h3>
+                <div class="telemetry-value" id="positionX">-- m</div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Konum - Y</h3>
+                <div class="telemetry-value" id="positionY">-- m</div>
+            </div>
+            <div class="telemetry-card">
+                <h3>Konum - Z (Yükseklik)</h3>
+                <div class="telemetry-value" id="positionZ">-- m</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Joystick state
+        let joystickState = {
+            roll: 0,
+            pitch: 0,
+            yaw: 0,
+            throttle: 0 // Default 0 for safety
+        };
+        
+        let controlInterval = null;
+        let telemetryInterval = null;
+        let telemetryErrorCount = 0;
+        const MAX_TELEMETRY_ERRORS = 5;
+        let controlInFlight = false;
+        let telemetryInFlight = false;
+        let isConnected = false;
+        let isCalibrated = false;
+        let lastTelemetry = {
+            armed: false,
+            posHold: false,
+            calibrated: false
+        };
+        let statusInterval = null;
+        
+        // Status message display
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.textContent = message;
+            document.body.appendChild(statusDiv);
+            
+            setTimeout(() => {
+                statusDiv.style.opacity = '0';
+                setTimeout(() => statusDiv.remove(), 300);
+            }, 2000);
+        }
+        
+        function setBadge(el, text, ok) {
+            el.textContent = text;
+            el.className = 'status-indicator ' + (ok ? 'status-armed' : 'status-disarmed');
+        }
+        
+        async function fetchStatus() {
+            try {
+                const r = await fetch('/api/status', { cache: 'no-cache' });
+                if (!r.ok) throw new Error('status not ok');
+                const d = await r.json();
+                isConnected = !!d.success;
+                const connEl = document.getElementById('connStatus');
+                setBadge(connEl, isConnected ? 'BAĞLI' : 'BAĞLI DEĞİL', isConnected);
+                
+                const rc = await fetch('/api/calibration/status', { cache: 'no-cache' });
+                if (rc.ok) {
+                    const dc = await rc.json();
+                    isCalibrated = !!dc.calibrated;
+                    const calibEl = document.getElementById('calibStatus');
+                    setBadge(calibEl, `KALİBRASYON: ${isCalibrated ? 'TAMAM' : 'BEKLİYOR'}`, isCalibrated);
+                }
+            } catch (e) {
+                isConnected = false;
+                const connEl = document.getElementById('connStatus');
+                setBadge(connEl, 'BAĞLI DEĞİL', false);
+            }
+        }
+        
+        function startStatusPolling() {
+            if (!statusInterval) {
+                statusInterval = setInterval(fetchStatus, 1000);
+                fetchStatus();
+            }
+        }
+        
+        function stopStatusPolling() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+            }
+        }
+        
+        // Joystick implementation
+        function initJoystick(containerId, stickId, isLeft) {
+            const container = document.getElementById(containerId);
+            const stick = document.getElementById(stickId);
+            const radius = 100; // Half of joystick area width/height
+            const stickRadius = 30; // Half of stick width/height
+            let isDragging = false;
+            
+            function updateJoystick(event) {
+                if (!isDragging) return;
+                
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                let clientX, clientY;
+                if (event.touches && event.touches.length > 0) {
+                    clientX = event.touches[0].clientX;
+                    clientY = event.touches[0].clientY;
+                } else {
+                    clientX = event.clientX;
+                    clientY = event.clientY;
+                }
+                
+                const dx = clientX - centerX;
+                const dy = clientY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = radius - stickRadius;
+                
+                let x = dx;
+                let y = dy;
+                
+                if (distance > maxDistance) {
+                    x = (dx / distance) * maxDistance;
+                    y = (dy / distance) * maxDistance;
+                }
+                
+                stick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+                
+                // Normalize to -100 to 100
+                const normalizedX = (x / maxDistance) * 100;
+                const normalizedY = (y / maxDistance) * 100;
+                
+                // Dead zone: ignore values < 2% (prevents drift)
+                const DEAD_ZONE = 2.0;
+                
+                if (isLeft) {
+                    joystickState.roll = Math.abs(normalizedX) < DEAD_ZONE ? 0 : -normalizedX;
+                    joystickState.pitch = Math.abs(normalizedY) < DEAD_ZONE ? 0 : normalizedY;
+                    document.getElementById('rollValue').textContent = Math.round(joystickState.roll);
+                    document.getElementById('pitchValue').textContent = Math.round(joystickState.pitch);
+                } else {
+                    joystickState.yaw = Math.abs(normalizedX) < DEAD_ZONE ? 0 : -normalizedX;
+                    // Throttle: top = 100, bottom = 0 (yukarı itince gaz artar)
+                    let newThrottle = (100 - normalizedY) / 2;
+                    newThrottle = Math.max(0, Math.min(100, newThrottle));
+                    // Dead zone for throttle at bottom (0-2)
+                    if (newThrottle < DEAD_ZONE) {
+                        joystickState.throttle = 0;
+                    } else {
+                        joystickState.throttle = newThrottle;
+                    }
+                    document.getElementById('yawValue').textContent = Math.round(joystickState.yaw);
+                    document.getElementById('throttleValue').textContent = Math.round(joystickState.throttle);
+                }
+                
+                stick.classList.add('active');
+            }
+            
+            function resetJoystick() {
+                stick.style.transform = 'translate(-50%, -50%)';
+                stick.classList.remove('active');
+                
+                if (isLeft) {
+                    joystickState.roll = 0;
+                    joystickState.pitch = 0;
+                    document.getElementById('rollValue').textContent = '0';
+                    document.getElementById('pitchValue').textContent = '0';
+                } else {
+                    joystickState.yaw = 0;
+                    joystickState.throttle = (lastTelemetry && lastTelemetry.posHold) ? 50 : 0;
+                    document.getElementById('yawValue').textContent = '0';
+                    document.getElementById('throttleValue').textContent = Math.round(joystickState.throttle);
+                }
+            }
+            
+            // Mouse events
+            stick.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                e.preventDefault();
+            });
+            
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                updateJoystick(e);
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', updateJoystick);
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    resetJoystick();
+                }
+            });
+            
+            // Touch events - prevent page scroll
+            stick.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+            
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                updateJoystick(e);
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    updateJoystick(e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    updateJoystick(e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchend', (e) => {
+                if (isDragging) {
+                    isDragging = false;
+                    resetJoystick();
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchcancel', (e) => {
+                if (isDragging) {
+                    isDragging = false;
+                    resetJoystick();
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+        }
+        
+        // Send control commands with value validation
+        // Heartbeat mekanizması: WiFi bağlantısını kontrol etmek için sürekli küçük paketler gönderilir
+        let lastControlErrorAt = 0;
+        let lastSent = {roll: 0, pitch: 0, yaw: 0, throttle: 0};
+        let lastSendAt = 0;
+        const HEARTBEAT_MS = 50; // 50ms heartbeat interval (20 Hz) - WiFi bağlantı kontrolü için
+        async function sendControl() {
+            if (!isConnected) return;
+            if (!isArmed) return; // Don't send control if not armed
+            if (telemetryErrorCount >= MAX_TELEMETRY_ERRORS) return;
+            if (controlInFlight) {
+                return;
+            }
+            controlInFlight = true;
+            try {
+                // Clamp values to valid ranges for safety
+                const roll = Math.max(-100, Math.min(100, Math.round(joystickState.roll)));
+                const pitch = Math.max(-100, Math.min(100, Math.round(joystickState.pitch)));
+                const yaw = Math.max(-100, Math.min(100, Math.round(joystickState.yaw)));
+                const throttle = Math.max(0, Math.min(100, Math.round(joystickState.throttle)));
+                
+                const payload = { roll, pitch, yaw, throttle };
+                const now = Date.now();
+                
+                // Her zaman heartbeat gönder (değişiklik olsa da olmasa da)
+                // Bu sayede WiFi bağlantısı sürekli kontrol edilir
+                // Joystick hareketi olmasa bile drone havada durabilir (position hold ile)
+                if ((now - lastSendAt) < HEARTBEAT_MS) {
+                    controlInFlight = false;
+                    return;
+                }
+                
+                lastSent = payload;
+                lastSendAt = now;
+                
+                const response = await fetch('/api/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    console.error('Control send failed:', response.status);
+                    const now = Date.now();
+                    if (now - lastControlErrorAt > 1500) {
+                        showStatus('Kontrol hatası: ' + response.status, 'error');
+                        lastControlErrorAt = now;
+                    }
+                }
+            } catch (error) {
+                console.error('Control send error:', error);
+                const now = Date.now();
+                if (now - lastControlErrorAt > 1500) {
+                    showStatus('Bağlantı hatası', 'error');
+                    lastControlErrorAt = now;
+                }
+            } finally {
+                controlInFlight = false;
+            }
+        }
+        
+        // Start control loop (only if armed)
+        function startControl() {
+            if (!isArmed) {
+                return; // Don't start if not armed
+            }
+            if (!controlInterval) {
+                controlInterval = setInterval(sendControl, 20); // 50 Hz
+            }
+        }
+        
+        // Stop control loop
+        function stopControl() {
+            if (controlInterval) {
+                clearInterval(controlInterval);
+                controlInterval = null;
+            }
+        }
+        
+        // Control buttons with UI feedback
+        let isArmed = false;
+        
+        async function toggleArm(btn) {
+            if (!btn) btn = event ? event.target : null;
+            if (!btn) return;
+            btn.disabled = true;
+            try {
+                const endpoint = isArmed ? '/api/disarm' : '/api/arm';
+                const response = await fetch(endpoint, { method: 'POST' });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    isArmed = !!data.armed;
+                    updateArmButton(btn, isArmed);
+                    if (isArmed) {
+                        showStatus('Drone başlatıldı - Motorlar hazır', 'success');
+                        startControl(); // Kontrol döngüsünü başlat
+                    } else {
+                        showStatus('Drone durduruldu - Motorlar kapatıldı', 'warning');
+                        stopControl(); // Kontrol döngüsünü durdur
+                    }
+                } else {
+                    showStatus(data.message || (isArmed ? 'Durdurma başarısız' : 'Başlatma başarısız'), 'error');
+                }
+            } catch (error) {
+                console.error('Arm/Disarm error:', error);
+                showStatus('Bağlantı hatası: Komut gönderilemedi', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        function updateArmButton(btn, armed) {
+            if (armed) {
+                btn.textContent = 'DURDUR';
+                btn.className = 'btn btn-arm armed';
+            } else {
+                btn.textContent = 'BAŞLAT';
+                btn.className = 'btn btn-arm';
+            }
+        }
+        
+        async function takeoff(btn) {
+            if (!btn) btn = event ? event.target : null;
+            if (!btn) return;
+            btn.disabled = true;
+            try {
+                const response = await fetch('/api/takeoff', { method: 'POST' });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatus('Kalkış komutu gönderildi', 'success');
+                } else {
+                    showStatus('Kalkış komutu başarısız', 'error');
+                }
+            } catch (error) {
+                console.error('Takeoff error:', error);
+                showStatus('Bağlantı hatası: Kalkış komutu gönderilemedi', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        async function land(btn) {
+            if (!btn) btn = event ? event.target : null;
+            if (!btn) return;
+            btn.disabled = true;
+            try {
+                const response = await fetch('/api/land', { method: 'POST' });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatus('İniş komutu gönderildi', 'success');
+                } else {
+                    showStatus('İniş komutu başarısız', 'error');
+                }
+            } catch (error) {
+                console.error('Land error:', error);
+                showStatus('Bağlantı hatası: İniş komutu gönderilemedi', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        async function calibrateESC(btn) {
+            if (!btn) btn = event ? event.target : null;
+            if (!btn) return;
+            
+            // Safety check: Must be disarmed
+            if (isArmed) {
+                showStatus('ESC kalibrasyonu için önce drone\'u durdurun (DURDUR butonuna basın)', 'error');
+                return;
+            }
+            
+            // Confirmation
+            if (!confirm('ESC Kalibrasyonu başlatılacak.\n\n⚠️ ÖNEMLİ:\n1. Pervaneleri çıkarın!\n2. Drone disarmed durumda olmalı\n3. İşlem ~8 saniye sürecek\n\nDevam etmek istiyor musunuz?')) {
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Kalibrasyon yapılıyor...';
+            try {
+                const response = await fetch('/api/calibration/esc', { method: 'POST' });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatus('ESC kalibrasyonu başlatıldı. ~8 saniye sürecek...', 'success');
+                    // Re-enable button after calibration completes (~8 seconds)
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'ESC Kalibrasyonu';
+                        showStatus('ESC kalibrasyonu tamamlandı!', 'success');
+                    }, 8500);
+                } else {
+                    showStatus(data.message || 'ESC kalibrasyonu başarısız', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'ESC Kalibrasyonu';
+                }
+            } catch (error) {
+                console.error('ESC Calibration error:', error);
+                showStatus('Bağlantı hatası: ESC kalibrasyonu başlatılamadı', 'error');
+                btn.disabled = false;
+                btn.textContent = 'ESC Kalibrasyonu';
+            }
+        }
+        
+        async function emergency(btn) {
+            if (!btn) btn = event ? event.target : null;
+            if (!btn) return;
+            btn.disabled = true;
+            try {
+                const response = await fetch('/api/emergency', { method: 'POST' });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatus('ACİL DURDUR AKTİF!', 'error');
+                } else {
+                    showStatus('Acil durdur komutu başarısız!', 'error');
+                }
+            } catch (error) {
+                console.error('Emergency error:', error);
+                showStatus('KRİTİK: Bağlantı hatası - Acil durdur komutu gönderilemedi!', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        // PID functions with validation and feedback
+        async function loadPIDs() {
+            try {
+                const response = await fetch('/api/pid');
+                if (!response.ok) {
+                    showStatus('PID yükleme hatası: ' + response.status, 'error');
+                    return;
+                }
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('rollKp').value = data.attitude.roll.kp;
+                    document.getElementById('rollKi').value = data.attitude.roll.ki;
+                    document.getElementById('rollKd').value = data.attitude.roll.kd;
+                    document.getElementById('pitchKp').value = data.attitude.pitch.kp;
+                    document.getElementById('pitchKi').value = data.attitude.pitch.ki;
+                    document.getElementById('pitchKd').value = data.attitude.pitch.kd;
+                    document.getElementById('yawKp').value = data.attitude.yaw.kp;
+                    document.getElementById('yawKi').value = data.attitude.yaw.ki;
+                    document.getElementById('yawKd').value = data.attitude.yaw.kd;
+                    showStatus('PID parametreleri yüklendi', 'success');
+                } else {
+                    showStatus('PID yükleme başarısız', 'error');
+                }
+            } catch (error) {
+                console.error('Load PID error:', error);
+                showStatus('Bağlantı hatası: PID yüklenemedi', 'error');
+            }
+        }
+        
+        // Validate PID value
+        function validatePIDValue(value, min = -1000, max = 1000) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return false;
+            return (num >= min && num <= max);
+        }
+        
+        async function savePIDs() {
+            try {
+                // Validate all PID inputs
+                const rollKp = parseFloat(document.getElementById('rollKp').value);
+                const rollKi = parseFloat(document.getElementById('rollKi').value);
+                const rollKd = parseFloat(document.getElementById('rollKd').value);
+                const pitchKp = parseFloat(document.getElementById('pitchKp').value);
+                const pitchKi = parseFloat(document.getElementById('pitchKi').value);
+                const pitchKd = parseFloat(document.getElementById('pitchKd').value);
+                const yawKp = parseFloat(document.getElementById('yawKp').value);
+                const yawKi = parseFloat(document.getElementById('yawKi').value);
+                const yawKd = parseFloat(document.getElementById('yawKd').value);
+                
+                // Validate ranges (reasonable PID limits)
+                if (!validatePIDValue(rollKp) || !validatePIDValue(rollKi) || !validatePIDValue(rollKd) ||
+                    !validatePIDValue(pitchKp) || !validatePIDValue(pitchKi) || !validatePIDValue(pitchKd) ||
+                    !validatePIDValue(yawKp) || !validatePIDValue(yawKi) || !validatePIDValue(yawKd)) {
+                    showStatus('Hata: Geçersiz PID değeri! (-1000 ile 1000 arası olmalı)', 'error');
+                    return;
+                }
+                
+                const pidData = {
+                    attitude: {
+                        roll: { kp: rollKp, ki: rollKi, kd: rollKd },
+                        pitch: { kp: pitchKp, ki: pitchKi, kd: pitchKd },
+                        yaw: { kp: yawKp, ki: yawKi, kd: yawKd }
+                    }
+                };
+                
+                const response = await fetch('/api/pid/set', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(pidData)
+                });
+                
+                if (!response.ok) {
+                    showStatus('PID kaydetme hatası: ' + response.status, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                if (data.success) {
+                    showStatus(`PID parametreleri kaydedildi (${data.updated} güncellendi)`, 'success');
+                } else {
+                    showStatus('PID parametreleri kaydedilemedi', 'error');
+                }
+            } catch (error) {
+                console.error('Save PID error:', error);
+                showStatus('Bağlantı hatası: PID kaydedilemedi', 'error');
+            }
+        }
+        
+        async function applyPIDs() {
+            // Apply = Save (they are the same in this implementation)
+            await savePIDs();
+            showStatus('PID parametreleri uygulandı', 'success');
+        }
+        
+        // Telemetry polling with connection monitoring
+        async function fetchTelemetry() {
+            if (telemetryInFlight) {
+                return;
+            }
+            telemetryInFlight = true;
+            try {
+                // Create abort controller for timeout (better browser compatibility)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch('/api/telemetry', {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    telemetryErrorCount = 0; // Reset error count on success
+                    document.querySelector('.telemetry-section').classList.remove('telemetry-disconnected');
+                    
+                    // Update battery voltage with color coding
+                    const batteryElement = document.getElementById('batteryVoltage');
+                    batteryElement.textContent = data.batt.toFixed(2) + 'V';
+                    
+                    if (data.batt < 13.2) {
+                        batteryElement.className = 'telemetry-value battery-low';
+                    } else if (data.batt < 13.5) {
+                        batteryElement.className = 'telemetry-value battery-warning';
+                    } else {
+                        batteryElement.className = 'telemetry-value battery-ok';
+                    }
+                    
+                    // Update attitude
+                    document.getElementById('attitudeRoll').textContent = data.attitude.roll.toFixed(2) + '°';
+                    document.getElementById('attitudePitch').textContent = data.attitude.pitch.toFixed(2) + '°';
+                    document.getElementById('attitudeYaw').textContent = data.attitude.yaw.toFixed(2) + '°';
+                    
+                    // Update position
+                    document.getElementById('positionX').textContent = data.position.x.toFixed(3) + ' m';
+                    document.getElementById('positionY').textContent = data.position.y.toFixed(3) + ' m';
+                    document.getElementById('positionZ').textContent = data.position.z.toFixed(3) + ' m';
+                    
+                    // Update armed status
+                    const armedElement = document.getElementById('armedStatus');
+                    if (data.armed) {
+                        armedElement.textContent = 'SİLAHLI';
+                        armedElement.className = 'status-indicator status-armed';
+                    } else {
+                        armedElement.textContent = 'SİLAHSIZ';
+                        armedElement.className = 'status-indicator status-disarmed';
+                    }
+                    
+                    // Sync arm button with telemetry
+                    if (isArmed !== !!data.armed) {
+                        isArmed = !!data.armed;
+                        const armButton = document.getElementById('armButton');
+                        if (armButton) {
+                            updateArmButton(armButton, isArmed);
+                        }
+                    }
+                    
+                    lastTelemetry.armed = !!data.armed;
+                    lastTelemetry.posHold = !!data.posHold;
+                    lastTelemetry.calibrated = !!data.calibrated;
+                    
+                    // PosHold badge
+                    const phEl = document.getElementById('posholdStatus');
+                    setBadge(phEl, `POSHOLD: ${lastTelemetry.posHold ? 'AÇIK' : 'KAPALI'}`, lastTelemetry.posHold);
+                    
+                    // Kalibrasyon badge (telemetriden de güncelle)
+                    const calibEl = document.getElementById('calibStatus');
+                    setBadge(calibEl, `KALİBRASYON: ${lastTelemetry.calibrated ? 'TAMAM' : 'BEKLİYOR'}`, lastTelemetry.calibrated);
+                } else {
+                    throw new Error('Invalid telemetry data');
+                }
+            } catch (error) {
+                console.error('Telemetry fetch error:', error);
+                telemetryErrorCount++;
+                
+                // Show warning if multiple consecutive errors
+                if (telemetryErrorCount >= MAX_TELEMETRY_ERRORS) {
+                    document.querySelector('.telemetry-section').classList.add('telemetry-disconnected');
+                    showStatus('UYARI: Telemetri bağlantısı kesildi!', 'warning');
+                }
+                
+                // Retry with exponential backoff (don't spam errors)
+                if (telemetryErrorCount < MAX_TELEMETRY_ERRORS) {
+                    // Will retry on next interval
+                }
+            } finally {
+                telemetryInFlight = false;
+            }
+        }
+
+        function startTelemetry() {
+            if (!telemetryInterval) {
+                telemetryInterval = setInterval(fetchTelemetry, 100); // 10 Hz
+                fetchTelemetry();
+            }
+        }
+
+        function stopTelemetry() {
+            if (telemetryInterval) {
+                clearInterval(telemetryInterval);
+                telemetryInterval = null;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initJoystick('joystickLeft', 'stickLeft', true);
+            initJoystick('joystickRight', 'stickRight', false);
+            startStatusPolling();
+            startControl();
+            startTelemetry();
+            loadPIDs();
+            
+            // Prevent page scroll when touching joystick areas
+            document.addEventListener('touchmove', function(e) {
+                const target = e.target;
+                const joystickArea = target.closest('.joystick-area');
+                const joystickStick = target.closest('.joystick-stick');
+                const joystickContainer = target.closest('.joystick-container');
+                
+                // If touching joystick, prevent all scrolling
+                if (joystickArea || joystickStick || joystickContainer) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }, { passive: false });
+            
+            // Prevent Android Chrome zoom
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            stopControl();
+            stopTelemetry();
+        });
+    </script>
+</body>
+</html>
